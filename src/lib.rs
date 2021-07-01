@@ -1,17 +1,22 @@
-pub const OP_MATCH_BYTE: u8 = 0;
+pub mod vm;
+pub mod compiler;
+
+use compiler::Program;
 
 #[derive(Debug)]
 pub struct Regex {
+    program: Program,
 }
 
 impl Regex {
     pub fn compile(pattern: &[u8]) -> Self {
         Self {
+            program: Program::compile(pattern),
         }
     }
 
-    pub fn program(&self) -> &[u8] {
-        todo!()
+    pub fn program(&self) -> &Program {
+        &self.program
     }
 
     pub fn is_match_bytes(&self, bytes: &[u8]) -> bool {
@@ -22,6 +27,8 @@ impl Regex {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use crate::vm::OP_MATCH_BYTE;
 
     #[test]
     fn basic_pattern() {
