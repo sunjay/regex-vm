@@ -1,6 +1,7 @@
 pub mod vm;
 pub mod compiler;
 
+use vm::{ExecuteStatus, RegexVM};
 use compiler::Program;
 
 #[derive(Debug)]
@@ -20,7 +21,8 @@ impl Regex {
     }
 
     pub fn is_match(&self, bytes: &[u8]) -> bool {
-        todo!()
+        let mut vm = RegexVM::default();
+        vm.execute(&self.program, bytes) == ExecuteStatus::Success
     }
 }
 
@@ -28,21 +30,36 @@ impl Regex {
 mod tests {
     use super::*;
 
-    use crate::vm::OP_MATCH_BYTE;
+    use crate::vm;
+
+    #[test]
+    fn empty_pattern() {
+        let pattern = Regex::compile(b"");
+
+        assert_eq!(pattern.program(), &[
+            vm::OP_SUCCESS,
+        ]);
+
+        // empty string is in all strings, so everything should match
+        assert!(pattern.is_match(b""));
+        assert!(pattern.is_match(b"a"));
+        assert!(pattern.is_match(b"abc"));
+    }
 
     #[test]
     fn basic_pattern() {
         let pattern = Regex::compile(b"abcd");
 
         assert_eq!(pattern.program(), &[
-            OP_MATCH_BYTE,
+            vm::OP_MATCH_BYTE,
             b'a',
-            OP_MATCH_BYTE,
+            vm::OP_MATCH_BYTE,
             b'b',
-            OP_MATCH_BYTE,
+            vm::OP_MATCH_BYTE,
             b'c',
-            OP_MATCH_BYTE,
+            vm::OP_MATCH_BYTE,
             b'd',
+            vm::OP_SUCCESS,
         ]);
 
         assert!(!pattern.is_match(b""));

@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::vm::OP_MATCH_BYTE;
+use crate::vm;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Program {
@@ -30,12 +30,16 @@ impl fmt::Debug for Program {
         let mut program = self.bytes.iter();
         while let Some(&byte) = program.next() {
             match byte {
-                OP_MATCH_BYTE => {
+                vm::OP_SUCCESS => {
+                    dbg_list.entry(&format_args!("SUCCESS()"));
+                },
+
+                vm::OP_MATCH_BYTE => {
                     let arg = expect_arg(&mut program);
                     dbg_list.entry(&format_args!("MATCH_BYTE(b'{}')", arg as char));
                 },
 
-                _ => unreachable!(),
+                _ => unreachable!("bug: unknown op code '{}'", byte),
             }
         }
 
@@ -51,14 +55,20 @@ impl Program {
             match pattern_byte {
                 // Default to just matching the byte exactly as is
                 _ => {
-                    program.push(OP_MATCH_BYTE);
+                    program.push(vm::OP_MATCH_BYTE);
                     program.push(pattern_byte);
                 }
             }
         }
 
+        program.push(vm::OP_SUCCESS);
+
         program.shrink_to_fit();
         let bytes = program.into();
         Program {bytes}
+    }
+
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes
     }
 }
