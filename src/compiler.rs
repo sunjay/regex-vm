@@ -23,19 +23,15 @@ impl fmt::Debug for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut dbg_list = f.debug_list();
 
-        fn expect_arg(prog: &mut std::slice::Iter<u8>) -> u8 {
-            *prog.next().expect("bug: expected an argument while disassembling")
-        }
-
-        let mut program = self.bytes.iter();
-        while let Some(&byte) = program.next() {
+        let mut program = self.iter();
+        while let Some(byte) = program.next() {
             match byte {
                 vm::OP_SUCCESS => {
                     dbg_list.entry(&format_args!("SUCCESS()"));
                 },
 
                 vm::OP_MATCH_BYTE => {
-                    let arg = expect_arg(&mut program);
+                    let arg = program.expect_u8();
                     dbg_list.entry(&format_args!("MATCH_BYTE(b'{}')", arg as char));
                 },
 
@@ -65,10 +61,34 @@ impl Program {
 
         program.shrink_to_fit();
         let bytes = program.into();
+
         Program {bytes}
     }
 
-    pub fn bytes(&self) -> &[u8] {
-        &self.bytes
+    pub fn iter(&self) -> ProgramIter {
+        ProgramIter {
+            bytes: &self.bytes,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramIter<'a> {
+    bytes: &'a [u8],
+}
+
+impl<'a> Iterator for ProgramIter<'a> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let &next_byte = self.bytes.get(0)?;
+        self.bytes = &self.bytes[1..];
+        Some(next_byte)
+    }
+}
+
+impl<'a> ProgramIter<'a> {
+    pub fn expect_u8(&mut self) -> u8 {
+        self.next().expect("bug: expected at least one more byte")
     }
 }

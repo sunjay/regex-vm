@@ -1,4 +1,4 @@
-use crate::compiler::Program;
+use crate::compiler::{Program, ProgramIter};
 
 pub const OP_SUCCESS: u8 = 0;
 
@@ -22,8 +22,12 @@ impl<'a> Input<'a> {
     pub fn new(bytes: &'a [u8]) -> Self {
         Self {bytes}
     }
+}
 
-    pub fn next(&mut self) -> Option<u8> {
+impl<'a> Iterator for Input<'a> {
+    type Item = u8;
+
+    fn next(&mut self) -> Option<Self::Item> {
         let &next_byte = self.bytes.get(0)?;
         self.bytes = &self.bytes[1..];
         Some(next_byte)
@@ -31,25 +35,29 @@ impl<'a> Input<'a> {
 }
 
 
-#[derive(Debug, Default)]
-pub struct RegexVM {}
+#[derive(Debug)]
+pub struct RegexVM<'a> {
+    program: ProgramIter<'a>,
+    input: Input<'a>,
+}
 
-impl RegexVM {
-    pub fn execute(&mut self, program: &Program, input: &[u8]) -> ExecuteStatus {
-        fn arg_u8(mut program_bytes: impl Iterator<Item=u8>) -> u8 {
-            program_bytes.next().expect("bug: miscompiled program did not have expected argument")
-        }
+impl<'a> RegexVM<'a> {
+    pub fn new(program: &'a Program, input: &'a [u8]) -> Self {
+        let program = program.iter();
+        let input = Input::new(input);
 
-        let mut program_bytes = program.bytes().iter().copied();
-        let mut input = Input::new(input);
-        while let Some(program_byte) = program_bytes.next() {
+        Self {program, input}
+    }
+
+    pub fn execute(&mut self) -> ExecuteStatus {
+        while let Some(program_byte) = self.program.next() {
             match program_byte {
                 OP_SUCCESS => return ExecuteStatus::Success,
 
                 OP_MATCH_BYTE => {
-                    let target_byte = arg_u8(&mut program_bytes);
+                    let target_byte = self.program.expect_u8();
 
-                    if input.next() != Some(target_byte) {
+                    if self.input.next() != Some(target_byte) {
                         return ExecuteStatus::Aborted;
                     }
                 },

@@ -20,9 +20,9 @@ impl Regex {
         &self.program
     }
 
-    pub fn is_match(&self, bytes: &[u8]) -> bool {
-        let mut vm = RegexVM::default();
-        vm.execute(&self.program, bytes) == ExecuteStatus::Success
+    pub fn is_match(&self, input: &[u8]) -> bool {
+        let mut vm = RegexVM::new(&self.program, input);
+        vm.execute() == ExecuteStatus::Success
     }
 }
 
