@@ -19,7 +19,7 @@ impl Regex {
         &self.program
     }
 
-    pub fn is_match_bytes(&self, bytes: &[u8]) -> bool {
+    pub fn is_match(&self, bytes: &[u8]) -> bool {
         todo!()
     }
 }
@@ -45,16 +45,16 @@ mod tests {
             b'd',
         ]);
 
-        assert!(!pattern.is_match_bytes(b""));
-        assert!(!pattern.is_match_bytes(b"a"));
-        assert!(!pattern.is_match_bytes(b"ab"));
-        assert!(!pattern.is_match_bytes(b"abc"));
-        assert!(!pattern.is_match_bytes(b"abca"));
+        assert!(!pattern.is_match(b""));
+        assert!(!pattern.is_match(b"a"));
+        assert!(!pattern.is_match(b"ab"));
+        assert!(!pattern.is_match(b"abc"));
+        assert!(!pattern.is_match(b"abca"));
 
-        assert!(!pattern.is_match_bytes(b"abbd"));
+        assert!(!pattern.is_match(b"abbd"));
 
-        assert!(pattern.is_match_bytes(b"abcd"));
-        assert!(pattern.is_match_bytes(b"abcde"));
-        assert!(pattern.is_match_bytes(b"abcdabcd"));
+        assert!(pattern.is_match(b"abcd"));
+        assert!(pattern.is_match(b"abcde"));
+        assert!(pattern.is_match(b"abcdabcd"));
     }
 }
