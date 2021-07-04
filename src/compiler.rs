@@ -1,3 +1,5 @@
+mod parser;
+
 use std::fmt;
 
 use crate::vm;
