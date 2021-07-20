@@ -2,7 +2,7 @@ use crate::compiler::{Program, ProgramIter};
 
 pub const OP_SUCCESS: u8 = 0;
 
-pub const OP_MATCH_BYTE: u8 = 10;
+pub const OP_MATCH_CHAR: u8 = 10;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExecuteStatus {
@@ -15,22 +15,20 @@ pub enum ExecuteStatus {
 
 #[derive(Debug, Clone)]
 struct Input<'a> {
-    bytes: &'a [u8],
+    chars: std::str::Chars<'a>,
 }
 
 impl<'a> Input<'a> {
-    pub fn new(bytes: &'a [u8]) -> Self {
-        Self {bytes}
+    pub fn new(input: &'a str) -> Self {
+        Self {chars: input.chars()}
     }
 }
 
 impl<'a> Iterator for Input<'a> {
-    type Item = u8;
+    type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let &next_byte = self.bytes.get(0)?;
-        self.bytes = &self.bytes[1..];
-        Some(next_byte)
+        self.chars.next()
     }
 }
 
@@ -42,7 +40,7 @@ pub struct RegexVM<'a> {
 }
 
 impl<'a> RegexVM<'a> {
-    pub fn new(program: &'a Program, input: &'a [u8]) -> Self {
+    pub fn new(program: &'a Program, input: &'a str) -> Self {
         let program = program.iter();
         let input = Input::new(input);
 
@@ -54,10 +52,10 @@ impl<'a> RegexVM<'a> {
             match program_byte {
                 OP_SUCCESS => return ExecuteStatus::Success,
 
-                OP_MATCH_BYTE => {
-                    let target_byte = self.program.expect_u8();
+                OP_MATCH_CHAR => {
+                    let target_char = self.program.expect_char();
 
-                    if self.input.next() != Some(target_byte) {
+                    if self.input.next() != Some(target_char) {
                         return ExecuteStatus::Aborted;
                     }
                 },
